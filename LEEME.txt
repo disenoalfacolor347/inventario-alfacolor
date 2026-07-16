@@ -1,0 +1,22 @@
+INVENTARIO ALFACOLOR - VERSIÓN PWA
+
+ARCHIVOS INCLUIDOS
+- index.html
+- manifest.json
+- service-worker.js
+- icons/icon-192.png
+- icons/icon-512.png
+
+CÓMO SUBIR A GITHUB
+1. Descomprime este ZIP.
+2. En tu repositorio pulsa Add file > Upload files.
+3. Arrastra TODOS los archivos y la carpeta icons.
+4. Pulsa Commit changes.
+5. Ve a Settings > Pages.
+6. Selecciona Deploy from a branch, rama main y carpeta /(root).
+7. Pulsa Save.
+8. Abre el enlace publicado en Safari.
+9. Pulsa Compartir > Agregar a pantalla de inicio.
+
+IMPORTANTE
+Los datos se guardan localmente en cada dispositivo. Usa la opción de respaldo de la aplicación periódicamente.
