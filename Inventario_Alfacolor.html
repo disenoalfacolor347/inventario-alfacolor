@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#7a1f2b">
+<title>Inventario Alfacolor</title>
+<style>
+:root{
+  --vino:#7a1f2b; --vino2:#9a3442; --crema:#f7f0e5; --blanco:#fff;
+  --texto:#252525; --gris:#6b7280; --borde:#e4d8c8; --verde:#177245; --rojo:#b42318;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--crema);color:var(--texto)}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--vino),var(--vino2));color:white;padding:16px 18px;box-shadow:0 2px 12px #0002}
+header h1{font-size:21px;margin:0}.sub{font-size:12px;opacity:.9;margin-top:3px}
+main{max-width:1100px;margin:auto;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px;box-shadow:0 3px 12px #0000000b}
+.kpi strong{display:block;font-size:26px;color:var(--vino)}.kpi span{font-size:13px;color:var(--gris)}
+nav{display:flex;gap:8px;overflow:auto;padding-bottom:10px}
+nav button,.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}
+nav button{background:#eaded1;color:#4d3034;white-space:nowrap}
+nav button.active{background:var(--vino);color:#fff}
+.btn{background:var(--vino);color:#fff}.btn.secondary{background:#eee4d8;color:#432}.btn.danger{background:var(--rojo)}
+section{display:none}section.active{display:block}
+form{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+label{font-size:13px;font-weight:700;color:#4b3d3d}
+input,select,textarea{width:100%;margin-top:5px;padding:12px;border:1px solid #d6c8b8;border-radius:10px;background:#fff;font-size:16px}
+.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.table-wrap{overflow:auto;border-radius:12px;border:1px solid var(--borde);background:#fff}
+table{border-collapse:collapse;width:100%;min-width:720px}th,td{padding:11px;border-bottom:1px solid #eee;text-align:left;font-size:13px}
+th{background:#f2e7da;position:sticky;top:0}.entrada{color:var(--verde);font-weight:700}.salida{color:var(--rojo);font-weight:700}
+.stock-bajo{background:#fff1f0}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.toolbar input{margin:0;flex:1;min-width:200px}
+.notice{font-size:12px;color:var(--gris);margin-top:10px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:30}
+.modal.open{display:flex}.modal-box{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px}
+.empty{text-align:center;color:var(--gris);padding:30px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.grid .card{padding:12px}form{grid-template-columns:1fr}.full{grid-column:auto}header{padding-top:max(16px,env(safe-area-inset-top))}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Inventario Alfacolor</h1>
+  <div class="sub">Entradas, salidas y stock · datos guardados en este dispositivo</div>
+</header>
+<main>
+  <div class="grid">
+    <div class="card kpi"><strong id="kProductos">0</strong><span>Productos registrados</span></div>
+    <div class="card kpi"><strong id="kUnidades">0</strong><span>Unidades en existencia</span></div>
+    <div class="card kpi"><strong id="kBajos">0</strong><span>Productos con stock bajo</span></div>
+  </div>
+
+  <nav>
+    <button class="active" data-tab="stock">Stock</button>
+    <button data-tab="movimiento">Nueva entrada/salida</button>
+    <button data-tab="productos">Productos</button>
+    <button data-tab="historial">Historial</button>
+    <button data-tab="respaldo">Respaldo</button>
+  </nav>
+
+  <section id="stock" class="active">
+    <div class="card">
+      <div class="toolbar"><input id="buscarStock" placeholder="Buscar por producto, código o categoría"></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Código</th><th>Producto</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Unidad</th></tr></thead>
+        <tbody id="tablaStock"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="movimiento">
+    <div class="card">
+      <h2>Registrar movimiento</h2>
+      <form id="formMovimiento">
+        <div><label>Tipo<select id="tipo" required><option value="entrada">Entrada</option><option value="salida">Salida</option></select></label></div>
+        <div><label>Fecha<input id="fecha" type="date" required></label></div>
+        <div class="full"><label>Producto<select id="productoMov" required></select></label></div>
+        <div><label>Cantidad<input id="cantidad" type="number" min="0.01" step="0.01" required></label></div>
+        <div><label>No. de orden de producción<input id="orden" placeholder="Opcional"></label></div>
+        <div class="full"><label>Notas<textarea id="notas" rows="2" placeholder="Proveedor, destino, responsable, etc."></textarea></label></div>
+        <div class="full actions"><button class="btn" type="submit">Guardar movimiento</button></div>
+      </form>
+      <div class="notice">El sistema no permite una salida mayor al stock disponible.</div>
+    </div>
+  </section>
+
+  <section id="productos">
+    <div class="card">
+      <h2>Agregar producto</h2>
+      <form id="formProducto">
+        <div><label>Código<input id="codigo" required placeholder="Ej. MAT-001"></label></div>
+        <div><label>Nombre<input id="nombre" required></label></div>
+        <div><label>Categoría<input id="categoria" placeholder="Ej. Papel, tinta, consumible"></label></div>
+        <div><label>Unidad<select id="unidad"><option>Pza</option><option>Kg</option><option>Litro</option><option>Metro</option><option>Caja</option><option>Rollo</option><option>Paquete</option></select></label></div>
+        <div><label>Stock inicial<input id="stockInicial" type="number" min="0" step="0.01" value="0"></label></div>
+        <div><label>Stock mínimo<input id="stockMinimo" type="number" min="0" step="0.01" value="0"></label></div>
+        <div class="full actions"><button class="btn" type="submit">Agregar producto</button></div>
+      </form>
+    </div>
+  </section>
+
+  <section id="historial">
+    <div class="card">
+      <div class="toolbar">
+        <input id="buscarHistorial" placeholder="Buscar movimiento">
+        <button class="btn secondary" id="exportarCSV">Exportar CSV</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Cantidad</th><th>Orden</th><th>Notas</th><th></th></tr></thead>
+        <tbody id="tablaHistorial"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="respaldo">
+    <div class="card">
+      <h2>Respaldo de información</h2>
+      <p>Descarga una copia completa y guárdala en Archivos, iCloud Drive o Google Drive.</p>
+      <div class="actions">
+        <button class="btn" id="exportarJSON">Descargar respaldo</button>
+        <label class="btn secondary" style="display:inline-block">Importar respaldo<input id="importarJSON" type="file" accept=".json" hidden></label>
+        <button class="btn danger" id="borrarTodo">Borrar todos los datos</button>
+      </div>
+      <div class="notice">Los datos se guardan mediante almacenamiento local del navegador. Conviene crear respaldos periódicos.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+const KEY='inventario_alfacolor_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"productos":[],"movimientos":[]}');
+const $=id=>document.getElementById(id);
+const hoy=()=>new Date().toISOString().slice(0,10);
+$('fecha').value=hoy();
+
+function guardar(){localStorage.setItem(KEY,JSON.stringify(db));render();}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function stockProducto(id){
+  const p=db.productos.find(x=>x.id===id); if(!p)return 0;
+  return Number(p.stockInicial||0)+db.movimientos.filter(m=>m.productoId===id).reduce((a,m)=>a+(m.tipo==='entrada'?1:-1)*Number(m.cantidad),0);
+}
+function render(){
+  const q=$('buscarStock').value.toLowerCase();
+  const productos=db.productos.filter(p=>[p.codigo,p.nombre,p.categoria].join(' ').toLowerCase().includes(q));
+  $('tablaStock').innerHTML=productos.length?productos.map(p=>{
+    const st=stockProducto(p.id), bajo=st<=Number(p.stockMinimo||0);
+    return `<tr class="${bajo?'stock-bajo':''}"><td>${esc(p.codigo)}</td><td>${esc(p.nombre)}</td><td>${esc(p.categoria)}</td><td><b>${st.toFixed(2)}</b></td><td>${Number(p.stockMinimo).toFixed(2)}</td><td>${esc(p.unidad)}</td></tr>`;
+  }).join(''):`<tr><td colspan="6" class="empty">No hay productos registrados.</td></tr>`;
+
+  $('productoMov').innerHTML='<option value="">Selecciona un producto</option>'+db.productos.map(p=>`<option value="${p.id}">${esc(p.codigo)} · ${esc(p.nombre)} (Stock: ${stockProducto(p.id).toFixed(2)})</option>`).join('');
+
+  const hq=$('buscarHistorial').value.toLowerCase();
+  const movs=[...db.movimientos].sort((a,b)=>(b.fecha+b.creado).localeCompare(a.fecha+a.creado)).filter(m=>{
+    const p=db.productos.find(x=>x.id===m.productoId)||{};
+    return [m.fecha,m.tipo,p.nombre,p.codigo,m.orden,m.notas].join(' ').toLowerCase().includes(hq);
+  });
+  $('tablaHistorial').innerHTML=movs.length?movs.map(m=>{
+    const p=db.productos.find(x=>x.id===m.productoId)||{nombre:'Producto eliminado'};
+    return `<tr><td>${esc(m.fecha)}</td><td class="${m.tipo}">${m.tipo.toUpperCase()}</td><td>${esc(p.nombre)}</td><td>${Number(m.cantidad).toFixed(2)}</td><td>${esc(m.orden)}</td><td>${esc(m.notas)}</td><td><button class="btn danger" onclick="eliminarMovimiento('${m.id}')">Eliminar</button></td></tr>`;
+  }).join(''):`<tr><td colspan="7" class="empty">No hay movimientos.</td></tr>`;
+
+  $('kProductos').textContent=db.productos.length;
+  $('kUnidades').textContent=db.productos.reduce((a,p)=>a+stockProducto(p.id),0).toFixed(2);
+  $('kBajos').textContent=db.productos.filter(p=>stockProducto(p.id)<=Number(p.stockMinimo||0)).length;
+}
+function id(){return crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');$(b.dataset.tab).classList.add('active');render();
+});
+$('formProducto').onsubmit=e=>{
+  e.preventDefault();
+  const codigo=$('codigo').value.trim();
+  if(db.productos.some(p=>p.codigo.toLowerCase()===codigo.toLowerCase()))return alert('Ya existe un producto con ese código.');
+  db.productos.push({id:id(),codigo,nombre:$('nombre').value.trim(),categoria:$('categoria').value.trim(),unidad:$('unidad').value,stockInicial:Number($('stockInicial').value||0),stockMinimo:Number($('stockMinimo').value||0)});
+  e.target.reset();$('stockInicial').value=0;$('stockMinimo').value=0;guardar();alert('Producto agregado.');
+};
+$('formMovimiento').onsubmit=e=>{
+  e.preventDefault();
+  const productoId=$('productoMov').value,tipo=$('tipo').value,cantidad=Number($('cantidad').value);
+  if(tipo==='salida'&&cantidad>stockProducto(productoId))return alert('No hay stock suficiente para realizar esta salida.');
+  db.movimientos.push({id:id(),productoId,tipo,cantidad,fecha:$('fecha').value,orden:$('orden').value.trim(),notas:$('notas').value.trim(),creado:new Date().toISOString()});
+  e.target.reset();$('fecha').value=hoy();guardar();alert('Movimiento guardado.');
+};
+window.eliminarMovimiento=idMov=>{if(confirm('¿Eliminar este movimiento?')){db.movimientos=db.movimientos.filter(m=>m.id!==idMov);guardar();}};
+$('buscarStock').oninput=render;$('buscarHistorial').oninput=render;
+function descargar(nombre,contenido,tipo){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([contenido],{type:tipo}));a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$('exportarJSON').onclick=()=>descargar(`respaldo_inventario_${hoy()}.json`,JSON.stringify(db,null,2),'application/json');
+$('importarJSON').onchange=async e=>{
+  try{const obj=JSON.parse(await e.target.files[0].text());if(!Array.isArray(obj.productos)||!Array.isArray(obj.movimientos))throw 0;
+  if(confirm('Esto reemplazará la información actual. ¿Continuar?')){db=obj;guardar();alert('Respaldo importado.');}}catch{alert('El archivo no es un respaldo válido.');}e.target.value='';
+};
+$('borrarTodo').onclick=()=>{if(confirm('¿Borrar definitivamente todos los productos y movimientos?')){db={productos:[],movimientos:[]};guardar();}};
+$('exportarCSV').onclick=()=>{
+  const filas=[['Fecha','Tipo','Código','Producto','Cantidad','Unidad','Orden de producción','Notas']];
+  db.movimientos.forEach(m=>{const p=db.productos.find(x=>x.id===m.productoId)||{};filas.push([m.fecha,m.tipo,p.codigo||'',p.nombre||'',m.cantidad,p.unidad||'',m.orden||'',m.notas||'']);});
+  const csv='\ufeff'+filas.map(f=>f.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  descargar(`movimientos_${hoy()}.csv`,csv,'text/csv;charset=utf-8');
+};
+render();
+</script>
+</body>
+</html>
